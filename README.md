@@ -3,7 +3,7 @@ Berikut adalah **dokumentasi lengkap** proyek Anda berdasarkan penjelasan dan in
 
 ---
 
-# Dep-Pur-IDS: Intrusion Detection System
+# NSL-KDD: Intrusion Detection System
 
 Sistem ini digunakan untuk mendeteksi apakah sebuah koneksi jaringan merupakan **serangan (Attack)** atau **normal**, menggunakan model Machine Learning berbasis **Random Forest**.
 
@@ -12,7 +12,7 @@ Sistem ini digunakan untuk mendeteksi apakah sebuah koneksi jaringan merupakan *
 ## Struktur Direktori
 
 ```
-Dep-Pur-IDS/
+NSL-KDD/
 ├── app.py                       # Aplikasi utama Flask
 ├── model/
 │   ├── rf_model.pkl            # Model RandomForest hasil training
