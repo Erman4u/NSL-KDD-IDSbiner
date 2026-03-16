@@ -3,7 +3,12 @@ import joblib
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
+import requests
+
 app = Flask(__name__)
+
+GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwT46kvlohb4vNWXu6fyZYpK9Ku7k8G2H8YkL7Au2sAI4B-rw1u7Zq7B2-X8zcUvWr3/exec"
+
 
 # --- Muat SEMUA model dan preprocessor saat startup ---
 MODELS = {
@@ -121,6 +126,29 @@ def index():
         try:
             result = predict_new_data(input_data, selected_model)
             result['model_used'] = available_models.get(selected_model_name, selected_model_name)
+            
+            # --- Integrasi Google Sheets ---
+            if "YOUR_WEB_APP" not in GOOGLE_SHEETS_WEBAPP_URL and GOOGLE_SHEETS_WEBAPP_URL.strip() != "":
+                payload = {
+                    "model_used": result['model_used'],
+                    "status": "ANOMALI" if result['prediction'] == 1 else "NORMAL",
+                    "probability_anomaly": result['probability_anomaly'],
+                    "probability_normal": result['probability_normal'],
+                    "inputs": input_data
+                }
+                try:
+                    # Non-blocking or short timeout
+                    response = requests.post(GOOGLE_SHEETS_WEBAPP_URL, json=payload, timeout=5)
+                    if response.status_code == 200:
+                        print("Data berhasil dikirim ke Google Sheets")
+                    else:
+                        print(f"Gagal mengirim data: HTTP {response.status_code}")
+                except Exception as sheet_err:
+                    print(f"Error mengirim ke Google Sheets: {sheet_err}")
+            else:
+                print("Peringatan: GOOGLE_SHEETS_WEBAPP_URL belum diatur. Data tidak dikirim.")
+            # -------------------------------
+            
         except Exception as e:
             result = {'prediction': -1, 'message': f"Terjadi kesalahan saat prediksi: {e}"}
             print(f"Error saat memanggil predict_new_data: {e}")

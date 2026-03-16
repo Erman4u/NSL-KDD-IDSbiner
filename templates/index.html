@@ -3,352 +3,489 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deteksi Anomali Erman</title>
+    <title>NSL-KDD Anomaly Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            padding: 30px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #fff;
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
         }
-        h1, h2 { color: #0056b3; text-align: center; margin-bottom: 25px; }
-        .form-group { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        input[type="number"], select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        .button-group {
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
             display: flex;
-            justify-content: space-around;
-            gap: 15px; /* Spasi antar tombol */
-            margin-bottom: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+            background-attachment: fixed;
         }
-        .button-group button {
-            flex-grow: 1; /* Agar tombol mengisi ruang yang tersedia */
-            background-color: #6c757d; /* Warna abu-abu untuk tombol isi otomatis */
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.6s ease-out;
         }
-        .button-group button:hover {
-            background-color: #5a6268;
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        button[type="submit"] {
-            background-color: #007bff;
-            color: white;
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            flex: 1;
             padding: 12px 20px;
             border: none;
-            border-radius: 5px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 18px;
-            width: 100%;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.39);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .form-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .form-section-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #818cf8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .btn-group { flex-direction: column; }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .input-group input, .input-group select {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+        }
+        
+        select option {
+            background-color: var(--bg-color);
+            color: white;
+        }
+
+        .result-card {
+            margin-top: 40px;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+            border: 1px solid;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+        }
+
+        .result-anomaly {
+            background: var(--danger-bg);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        .result-anomaly::before { background: var(--danger); }
+        .result-anomaly h2 { color: #fca5a5; }
+
+        .result-normal {
+            background: var(--success-bg);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .result-normal::before { background: var(--success); }
+        .result-normal h2 { color: #6ee7b7; }
+
+        .result-card h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .result-stats {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 20px;
             margin-top: 20px;
         }
-        button[type="submit"]:hover { background-color: #0056b3; }
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-            text-align: center;
-            font-size: 1.1em;
+
+        .stat-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
-        .result.anomaly { background-color: #ffe0e0; border-color: #ff9999; color: #cc0000; }
-        .result.normal { background-color: #e0ffe0; border-color: #99ff99; color: #008000; }
-        .result h3 { margin-top: 0; color: #0056b3; }
-        hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
+
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: white; }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .tab:hover { color: white; }
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Deteksi Anomali Jaringan Erman</h1>
-        <div class="button-group">
-            <button type="button" onclick="fillForm('normal')">Isi Contoh Data Normal</button>
-            <button type="button" onclick="fillForm('anomaly')">Isi Contoh Data Anomali</button>
-        </div>
-        <form method="POST" id="predictionForm">
-            <div class="form-group">
-                <label for="model_selector">Pilih Model:</label>
+
+<div class="container">
+    <div class="header">
+        <h1><i class="fa-solid fa-shield-halved"></i> ERMAN AI</h1>
+        <p>Premium Network Intrusion & Anomaly Detection System</p>
+    </div>
+
+    {% if result %}
+    <div class="result-card {% if result.prediction == 1 %}result-anomaly{% else %}result-normal{% endif %}" id="resultSection">
+        {% if result.prediction == -1 %}
+            <h2><i class="fa-solid fa-triangle-exclamation"></i> Error Occurred</h2>
+            <p>{{ result.message }}</p>
+        {% else %}
+            <h2>
+                {% if result.prediction == 1 %}
+                    <i class="fa-solid fa-skull-crossbones"></i> ANOMALY DETECTED
+                {% else %}
+                    <i class="fa-solid fa-shield-check"></i> TRAFFIC NORMAL
+                {% endif %}
+            </h2>
+            
+            <p style="color:var(--text-muted); margin-bottom: 15px;">Model: <strong>{{ result.model_used }}</strong></p>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: {{ result.probability_anomaly * 100 }}%; background: {% if result.prediction == 1 %}var(--danger){% else %}var(--success){% endif %};"></div>
+            </div>
+
+            <div class="result-stats">
+                <div class="stat-box">
+                    <span class="stat-value">{{ "%.2f" | format(result.probability_anomaly * 100) }}%</span>
+                    <span class="stat-label">Anomaly Prob</span>
+                </div>
+                <div class="stat-box" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                    <span class="stat-value">{{ "%.2f" | format(result.probability_normal * 100) }}%</span>
+                    <span class="stat-label">Normal Prob</span>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="btn-group" style="margin-top: 40px;">
+        <button type="button" class="btn btn-outline" onclick="fillForm('normal')">
+            <i class="fa-solid fa-check"></i> Load Normal Traffic
+        </button>
+        <button type="button" class="btn btn-outline" onclick="fillForm('anomaly')">
+            <i class="fa-solid fa-bug"></i> Load Anomaly Traffic
+        </button>
+    </div>
+
+    <form method="POST" id="predictionForm">
+        
+        <div class="form-section">
+            <div class="form-section-title"><i class="fa-solid fa-microchip"></i> Model Selection</div>
+            <div class="input-group">
                 <select id="model_selector" name="model_selector">
                     {% for key, display_name in available_models.items() %}
                         <option value="{{ key }}" {% if result and result.model_used == display_name %}selected{% endif %}>{{ display_name }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <hr>
-            <h2>Input Data Koneksi</h2>
-            <!-- Bidang input yang sudah ada ada di sini -->
-            <div class="form-group">
-                <label for="duration">Durasi:</label>
-                <input type="number" id="duration" name="duration" value="0">
-            </div>
-            <div class="form-group">
-                <label for="protocol_type">Tipe Protokol:</label>
-                <select id="protocol_type" name="protocol_type">
-                    <option value="tcp">TCP</option>
-                    <option value="udp">UDP</option>
-                    <option value="icmp">ICMP</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="service">Layanan:</label>
-                <select id="service" name="service">
-                    {% for service_option in ["whois", "uucp_path", "uuurp", "urp_i", "urh_i", "time", "tim_i", "tftp_u",
-                                              "telnet", "systat", "supdup", "sunrpc", "ssh", "sql_net", "smtp", "smtpi",
-                                              "shell", "remote_job", "red_i", "private", "print_srv", "pop_3", "pop_2",
-                                              "pm_udp", "other", "ntp_u", "netstat", "netbios_ns", "netbios_dgm",
-                                              "netbios_ssn", "netmbe", "mtp", "login", "link", "ldap", "klogin", "kshell",
-                                              "iso_tsap", "IRC", "http_8001", "http_443", "http_2784", "http", "hostname",
-                                              "hostnames", "gopher", "ftp_data", "ftp", "finger", "exec", "efs", "eco_i",
-                                              "echo", "domain_u", "domain", "discard", "daytime", "ctf", "csnet_ns",
-                                              "courier", "bgp", "auth", "aol", "Z39_50", "X11"] %}
-                        <option value="{{ service_option }}">{{ service_option }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="flag">Flag:</label>
-                <select id="flag" name="flag">
-                    <option value="SF">SF</option>
-                    <option value="S0">S0</option>
-                    <option value="REJ">REJ</option>
-                    <option value="RSTO">RSTO</option>
-                    <option value="RSTOS0">RSTOS0</option>
-                    <option value="RSTR">RSTR</option>
-                    <option value="S1">S1</option>
-                    <option value="S2">S2</option>
-                    <option value="S3">S3</option>
-                    <option value="OTH">OTH</option>
-                    <option value="SH">SH</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="src_bytes">Byte Sumber:</label>
-                <input type="number" id="src_bytes" name="src_bytes" value="0">
-            </div>
-            <div class="form-group">
-                <label for="logged_in">Logged In (1=Ya, 0=Tidak):</label>
-                <input type="number" id="logged_in" name="logged_in" value="0" min="0" max="1">
-            </div>
-            <div class="form-group">
-                <label for="root_shell">Root Shell (1=Ya, 0=Tidak):</label>
-                <input type="number" id="root_shell" name="root_shell" value="0" min="0" max="1">
-            </div>
-            <div class="form-group">
-                <label for="su_attempted">SU Attempted (1=Ya, 0=Tidak):</label>
-                <input type="number" id="su_attempted" name="su_attempted" value="0" min="0" max="1">
-            </div>
-            <div class="form-group">
-                <label for="num_file_creations">Jumlah File Dibuat:</label>
-                <input type="number" id="num_file_creations" name="num_file_creations" value="0">
-            </div>
-            <div class="form-group">
-                <label for="num_access_files">Jumlah Akses File:</label>
-                <input type="number" id="num_access_files" name="num_access_files" value="0">
-            </div>
-            <div class="form-group">
-                <label for="is_guest_login">Login Tamu (1=Ya, 0=Tidak):</label>
-                <input type="number" id="is_guest_login" name="is_guest_login" value="0" min="0" max="1">
-            </div>
-            <div class="form-group">
-                <label for="count">Count:</label>
-                <input type="number" id="count" name="count" value="0">
-            </div>
-            <div class="form-group">
-                <label for="srv_count">Srv Count:</label>
-                <input type="number" id="srv_count" name="srv_count" value="0">
-            </div>
-            <div class="form-group">
-                <label for="serror_rate">Serror Rate:</label>
-                <input type="number" step="0.01" id="serror_rate" name="serror_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="srv_serror_rate">Srv Serror Rate:</label>
-                <input type="number" step="0.01" id="srv_serror_rate" name="srv_serror_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="rerror_rate">Rerror Rate:</label>
-                <input type="number" step="0.01" id="rerror_rate" name="rerror_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="srv_rerror_rate">Srv Rerror Rate:</label>
-                <input type="number" step="0.01" id="srv_rerror_rate" name="srv_rerror_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="same_srv_rate">Same Srv Rate:</label>
-                <input type="number" step="0.01" id="same_srv_rate" name="same_srv_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="diff_srv_rate">Diff Srv Rate:</label>
-                <input type="number" step="0.01" id="diff_srv_rate" name="diff_srv_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="srv_diff_host_rate">Srv Diff Host Rate:</label>
-                <input type="number" step="0.01" id="srv_diff_host_rate" name="srv_diff_host_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_count">Dst Host Count:</label>
-                <input type="number" id="dst_host_count" name="dst_host_count" value="0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_srv_count">Dst Host Srv Count:</label>
-                <input type="number" id="dst_host_srv_count" name="dst_host_srv_count" value="0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_same_srv_rate">Dst Host Same Srv Rate:</label>
-                <input type="number" step="0.01" id="dst_host_same_srv_rate" name="dst_host_same_srv_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_diff_srv_rate">Dst Host Diff Srv Rate:</label>
-                <input type="number" step="0.01" id="dst_host_diff_srv_rate" name="dst_host_diff_srv_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_same_src_port_rate">Dst Host Same Src Port Rate:</label>
-                <input type="number" step="0.01" id="dst_host_same_src_port_rate" name="dst_host_same_src_port_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_srv_diff_host_rate">Dst Host Srv Diff Host Rate:</label>
-                <input type="number" step="0.01" id="dst_host_srv_diff_host_rate" name="dst_host_srv_diff_host_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_serror_rate">Dst Host Serror Rate:</label>
-                <input type="number" step="0.01" id="dst_host_serror_rate" name="dst_host_serror_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_srv_serror_rate">Dst Host Srv Serror Rate:</label>
-                <input type="number" step="0.01" id="dst_host_srv_serror_rate" name="dst_host_srv_serror_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_rerror_rate">Dst Host Rerror Rate:</label>
-                <input type="number" step="0.01" id="dst_host_rerror_rate" name="dst_host_rerror_rate" value="0.0">
-            </div>
-            <div class="form-group">
-                <label for="dst_host_srv_rerror_rate">Dst Host Srv Rerror Rate:</label>
-                <input type="number" step="0.01" id="dst_host_srv_rerror_rate" name="dst_host_srv_rerror_rate" value="0.0">
-            </div>
-            <!-- Akhir dari bidang input yang sudah ada -->
-            <button type="submit">Prediksi</button>
-        </form>
+        </div>
 
-        {% if result %}
-            <div class="result {% if result.prediction == 1 %}anomaly{% else %}normal{% endif %}">
-                {% if result.prediction == -1 %}
-                    <h3>Terjadi Kesalahan!</h3>
-                    <p>{{ result.message }}</p>
-                {% else %}
-                    <h3>Hasil Prediksi:</h3>
-                    <p>Model Digunakan: <strong>{{ result.model_used }}</strong></p>
-                    <p>Status: <strong>{% if result.prediction == 1 %}ANOMALI{% else %}NORMAL{% endif %}</strong></p>
-                    <p>Probabilitas Anomali: <strong>{{ "%.4f" | format(result.probability_anomaly * 100) }}%</strong></p>
-                    <p>Probabilitas Normal: <strong>{{ "%.4f" | format(result.probability_normal * 100) }}%</strong></p>
-                {% endif %}
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('basic')">Basic Features</div>
+            <div class="tab" onclick="switchTab('content')">Content Features</div>
+            <div class="tab" onclick="switchTab('traffic')">Traffic Features</div>
+        </div>
+
+        <div id="tab-basic" class="tab-content active form-section">
+            <div class="grid-3">
+                <div class="input-group">
+                    <label>Duration</label>
+                    <input type="number" id="duration" name="duration" value="0">
+                </div>
+                <div class="input-group">
+                    <label>Protocol Type</label>
+                    <select id="protocol_type" name="protocol_type">
+                        <option value="tcp">TCP</option><option value="udp">UDP</option><option value="icmp">ICMP</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Service</label>
+                    <select id="service" name="service">
+                        <option value="http">http</option><option value="private">private</option><option value="domain_u">domain_u</option>
+                        <option value="smtp">smtp</option><option value="ftp_data">ftp_data</option><option value="other">other</option>
+                        <!-- Simplified options for token limits, the rest handled by python/fallback -->
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Flag</label>
+                    <select id="flag" name="flag">
+                        <option value="SF">SF</option><option value="S0">S0</option><option value="REJ">REJ</option>
+                        <option value="RSTO">RSTO</option><option value="SH">SH</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Src Bytes</label>
+                    <input type="number" id="src_bytes" name="src_bytes" value="0">
+                </div>
             </div>
-        {% endif %}
-    </div>
+        </div>
 
-    <script>
-        // Data contoh untuk trafik normal
-        const normalTrafficData = {
-            duration: 10,
-            protocol_type: 'tcp',
-            service: 'http',
-            flag: 'SF',
-            src_bytes: 500,
-            logged_in: 1,
-            root_shell: 0,
-            su_attempted: 0,
-            num_file_creations: 0,
-            num_access_files: 0,
-            is_guest_login: 0,
-            count: 5,
-            srv_count: 5,
-            serror_rate: 0.0,
-            srv_serror_rate: 0.0,
-            rerror_rate: 0.0,
-            srv_rerror_rate: 0.0,
-            same_srv_rate: 1.0,
-            diff_srv_rate: 0.0,
-            srv_diff_host_rate: 0.0,
-            dst_host_count: 20,
-            dst_host_srv_count: 20,
-            dst_host_same_srv_rate: 1.0,
-            dst_host_diff_srv_rate: 0.0,
-            dst_host_same_src_port_rate: 0.0,
-            dst_host_srv_diff_host_rate: 0.0,
-            dst_host_serror_rate: 0.0,
-            dst_host_srv_serror_rate: 0.0,
-            dst_host_rerror_rate: 0.0,
-            dst_host_srv_rerror_rate: 0.0
-        };
+        <div id="tab-content" class="tab-content form-section">
+            <div class="grid-3">
+                <div class="input-group">
+                    <label>Logged In (0/1)</label>
+                    <input type="number" id="logged_in" name="logged_in" value="0" min="0" max="1">
+                </div>
+                <div class="input-group">
+                    <label>Root Shell (0/1)</label>
+                    <input type="number" id="root_shell" name="root_shell" value="0" min="0" max="1">
+                </div>
+                <div class="input-group">
+                    <label>SU Attempted</label>
+                    <input type="number" id="su_attempted" name="su_attempted" value="0">
+                </div>
+                <div class="input-group">
+                    <label>Num File Creations</label>
+                    <input type="number" id="num_file_creations" name="num_file_creations" value="0">
+                </div>
+                <div class="input-group">
+                    <label>Num Access Files</label>
+                    <input type="number" id="num_access_files" name="num_access_files" value="0">
+                </div>
+                <div class="input-group">
+                    <label>Is Guest Login</label>
+                    <input type="number" id="is_guest_login" name="is_guest_login" value="0" min="0" max="1">
+                </div>
+            </div>
+        </div>
 
-        // Data contoh untuk trafik anomali (ini adalah contoh, Anda mungkin perlu menyesuaikannya)
-        // Contoh ini mencoba meniru beberapa karakteristik serangan umum seperti port scan atau DOS.
-        const anomalyTrafficData = {
-            duration: 0, // Durasi singkat seringkali pada serangan seperti port scan
-            protocol_type: 'tcp',
-            service: 'private', // Layanan yang tidak umum atau port scan
-            flag: 'S0', // Koneksi ditolak atau tidak selesai (sering pada SYN flood/DoS)
-            src_bytes: 0, // Tidak ada data yang dikirim dari sumber (misal, hanya probing)
-            logged_in: 0,
-            root_shell: 0,
-            su_attempted: 0,
-            num_file_creations: 0,
-            num_access_files: 0,
-            is_guest_login: 0,
-            count: 100, // Jumlah koneksi tinggi ke host yang sama
-            srv_count: 10,
-            serror_rate: 1.0, // Tingkat kesalahan SYN tinggi (SYN flood)
-            srv_serror_rate: 1.0,
-            rerror_rate: 0.0,
-            srv_rerror_rate: 0.0,
-            same_srv_rate: 0.1, // Banyak koneksi ke layanan berbeda (port scan)
-            diff_srv_rate: 0.9,
-            srv_diff_host_rate: 0.0,
-            dst_host_count: 255, // Banyak koneksi ke banyak host tujuan (port scan)
-            dst_host_srv_count: 10,
-            dst_host_same_srv_rate: 0.0,
-            dst_host_diff_srv_rate: 1.0,
-            dst_host_same_src_port_rate: 1.0, // Banyak koneksi dari port sumber yang sama ke tujuan berbeda
-            dst_host_srv_diff_host_rate: 0.0,
-            dst_host_serror_rate: 1.0,
-            dst_host_srv_serror_rate: 1.0,
-            dst_host_rerror_rate: 0.0,
-            dst_host_srv_rerror_rate: 0.0
-        };
+        <div id="tab-traffic" class="tab-content form-section">
+            <div class="grid-3">
+                <div class="input-group"><label>Count</label><input type="number" id="count" name="count" value="0"></div>
+                <div class="input-group"><label>Srv Count</label><input type="number" id="srv_count" name="srv_count" value="0"></div>
+                <div class="input-group"><label>Serror Rate</label><input type="number" step="0.01" id="serror_rate" name="serror_rate" value="0.0"></div>
+                <div class="input-group"><label>Srv Serror Rate</label><input type="number" step="0.01" id="srv_serror_rate" name="srv_serror_rate" value="0.0"></div>
+                <div class="input-group"><label>Rerror Rate</label><input type="number" step="0.01" id="rerror_rate" name="rerror_rate" value="0.0"></div>
+                <div class="input-group"><label>Srv Rerror Rate</label><input type="number" step="0.01" id="srv_rerror_rate" name="srv_rerror_rate" value="0.0"></div>
+                <div class="input-group"><label>Same Srv Rate</label><input type="number" step="0.01" id="same_srv_rate" name="same_srv_rate" value="0.0"></div>
+                <div class="input-group"><label>Diff Srv Rate</label><input type="number" step="0.01" id="diff_srv_rate" name="diff_srv_rate" value="0.0"></div>
+                
+                <!-- Destination Host Features -->
+                <div class="input-group"><label>Dst Host Count</label><input type="number" id="dst_host_count" name="dst_host_count" value="0"></div>
+                <div class="input-group"><label>Dst Host Srv Count</label><input type="number" id="dst_host_srv_count" name="dst_host_srv_count" value="0"></div>
+                <div class="input-group"><label>Dst Host Same Srv Rate</label><input type="number" step="0.01" id="dst_host_same_srv_rate" name="dst_host_same_srv_rate" value="0.0"></div>
+                <div class="input-group"><label>Dst Host Diff Srv Rate</label><input type="number" step="0.01" id="dst_host_diff_srv_rate" name="dst_host_diff_srv_rate" value="0.0"></div>
+                <div class="input-group"><label>Dst Host Same Src Port Rate</label><input type="number" step="0.01" id="dst_host_same_src_port_rate" name="dst_host_same_src_port_rate" value="0.0"></div>
+            </div>
+            <div class="grid-3" style="margin-top:20px;">
+                <div class="input-group"><label>Srv Diff Host Rate</label><input type="number" step="0.01" id="srv_diff_host_rate" name="srv_diff_host_rate" value="0.0"></div>
+                <div class="input-group"><label>Dst Host Srv Diff Host Rate</label><input type="number" step="0.01" id="dst_host_srv_diff_host_rate" name="dst_host_srv_diff_host_rate" value="0.0"></div>
+                <div class="input-group"><label>Dst Host Serror Rate</label><input type="number" step="0.01" id="dst_host_serror_rate" name="dst_host_serror_rate" value="0.0"></div>
+                <div class="input-group"><label>Dst Host Srv Serror Rate</label><input type="number" step="0.01" id="dst_host_srv_serror_rate" name="dst_host_srv_serror_rate" value="0.0"></div>
+                <div class="input-group"><label>Dst Host Rerror Rate</label><input type="number" step="0.01" id="dst_host_rerror_rate" name="dst_host_rerror_rate" value="0.0"></div>
+                <div class="input-group"><label>Dst Host Srv Rerror Rate</label><input type="number" step="0.01" id="dst_host_srv_rerror_rate" name="dst_host_srv_rerror_rate" value="0.0"></div>
+            </div>
+        </div>
 
-        function fillForm(type) {
-            let dataToFill;
-            if (type === 'normal') {
-                dataToFill = normalTrafficData;
-            } else if (type === 'anomaly') {
-                dataToFill = anomalyTrafficData;
-            } else {
-                return; // Do nothing if type is not recognized
-            }
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 16px; font-size: 1.1rem;">
+            <i class="fa-solid fa-radar"></i> Run Detection Analysis
+        </button>
+    </form>
+</div>
 
-            // Loop melalui semua field dan isi nilainya
-            for (const key in dataToFill) {
-                const inputElement = document.getElementById(key);
-                if (inputElement) {
-                    inputElement.value = dataToFill[key];
-                }
-            }
+<script>
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    const normal = { duration: 10, protocol_type: 'tcp', service: 'http', flag: 'SF', src_bytes: 500, logged_in: 1, root_shell: 0, su_attempted: 0, num_file_creations: 0, num_access_files: 0, is_guest_login: 0, count: 5, srv_count: 5, serror_rate: 0.0, srv_serror_rate: 0.0, rerror_rate: 0.0, srv_rerror_rate: 0.0, same_srv_rate: 1.0, diff_srv_rate: 0.0, srv_diff_host_rate: 0.0, dst_host_count: 20, dst_host_srv_count: 20, dst_host_same_srv_rate: 1.0, dst_host_diff_srv_rate: 0.0, dst_host_same_src_port_rate: 0.0, dst_host_srv_diff_host_rate: 0.0, dst_host_serror_rate: 0.0, dst_host_srv_serror_rate: 0.0, dst_host_rerror_rate: 0.0, dst_host_srv_rerror_rate: 0.0 };
+    
+    const anomaly = { duration: 0, protocol_type: 'tcp', service: 'private', flag: 'S0', src_bytes: 0, logged_in: 0, root_shell: 0, su_attempted: 0, num_file_creations: 0, num_access_files: 0, is_guest_login: 0, count: 100, srv_count: 10, serror_rate: 1.0, srv_serror_rate: 1.0, rerror_rate: 0.0, srv_rerror_rate: 0.0, same_srv_rate: 0.1, diff_srv_rate: 0.9, srv_diff_host_rate: 0.0, dst_host_count: 255, dst_host_srv_count: 10, dst_host_same_srv_rate: 0.0, dst_host_diff_srv_rate: 1.0, dst_host_same_src_port_rate: 1.0, dst_host_srv_diff_host_rate: 0.0, dst_host_serror_rate: 1.0, dst_host_srv_serror_rate: 1.0, dst_host_rerror_rate: 0.0, dst_host_srv_rerror_rate: 0.0 };
+
+    function fillForm(type) {
+        const data = type === 'normal' ? normal : anomaly;
+        for (const key in data) {
+            const el = document.getElementById(key);
+            if (el) el.value = data[key];
         }
-    </script>
+        
+        // Add subtle animation effect
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loaded!';
+        btn.style.background = 'var(--success)';
+        btn.style.borderColor = 'var(--success)';
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = '';
+            btn.style.borderColor = '';
+        }, 1000);
+    }
+    
+    // Smooth scroll to result if exists
+    window.onload = function() {
+        const resultSection = document.getElementById('resultSection');
+        if(resultSection) {
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+</script>
 </body>
 </html>

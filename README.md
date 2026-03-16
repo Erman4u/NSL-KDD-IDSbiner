@@ -3,16 +3,27 @@ Deteksi Anomali Jaringan dengan Berbagai Model Machine Learning
 
 Proyek ini adalah aplikasi web sederhana berbasis Flask untuk mendeteksi anomali (serangan) pada trafik jaringan menggunakan beberapa model Machine Learning yang berbeda. Pengguna dapat memasukkan parameter trafik jaringan dan memilih model klasifikasi yang ingin digunakan untuk prediksi.
 
-Fitur Utama
-Pilihan Model: Pengguna dapat memilih antara berbagai model Machine Learning untuk prediksi, termasuk:
+# NSL-KDD: Intrusion Detection System
+Proyek ini adalah aplikasi web sederhana berbasis Flask untuk mendeteksi anomali (serangan) pada trafik jaringan menggunakan beberapa model Machine Learning yang berbeda. Pengguna dapat memasukkan parameter trafik jaringan dan memilih model klasifikasi yang ingin digunakan untuk prediksi.
 
-Logistic Regression
+## Fitur Utama
+* Pilihan Model: Pengguna dapat memilih antara berbagai model Machine Learning untuk prediksi, termasuk Logistic Regression, Random Forest, Support Vector Machine (SVM), Naive Bayes, dan K-Nearest Neighbors (KNN).
+* Prediksi Real-time: Dapatkan hasil prediksi (Normal atau Anomali) dan probabilitas terkait secara instan.
+* Isi Data Otomatis: Tombol praktis untuk mengisi formulir dengan contoh data trafik "Normal" atau "Anomali" untuk pengujian cepat.
+* Integrasi Google Sheets: Hasil prediksi otomatis dikirim ke Google Spreadsheet secara real-time.
 
-Random Forest
-
-Support Vector Machine (SVM)
-
-Naive Bayes
+## Struktur Proyek
+```
+NSL-KDD/
+├── app.py                       # Aplikasi utama Flask
+├── model/
+│   ├── logistic_regression_model.pkl
+│   ├── random_forest_model.pkl
+│   └── ... (dan model/encoder lainnya)
+├── requirements.txt            # Dependensi Python
+└── templates/
+    └── index.html              # UI/UX form input & hasil prediksi
+```
 
 K-Nearest Neighbors (KNN)
 
